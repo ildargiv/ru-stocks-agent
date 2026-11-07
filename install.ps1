@@ -1,6 +1,6 @@
 ﻿# Установка агента «Инвесткомитет / семейный офис» (акции РФ) на Windows (без WSL).
 #   powershell -ExecutionPolicy Bypass -File install.ps1 hermes-default   # Hermes: навык в основной профиль
-#   powershell -ExecutionPolicy Bypass -File install.ps1 hermes           # Hermes: отдельный профиль "stocks" с SOUL.md
+#   powershell -ExecutionPolicy Bypass -File install.ps1 hermes           # Hermes: профиль "stocks", если он есть, иначе основной
 #   powershell -ExecutionPolicy Bypass -File install.ps1 claude
 #   powershell -ExecutionPolicy Bypass -File install.ps1 codex
 #   powershell -ExecutionPolicy Bypass -File install.ps1 openclaw
@@ -39,13 +39,14 @@ switch ($Target) {
     "hermes" {
         $h = Get-HermesHome
         $prof = Join-Path $h "profiles\stocks"
-        if (-not (Test-Path $prof)) {
-            Write-Host "Создаю профиль Hermes 'stocks' (копия текущих ключей/модели)..."
-            hermes profile create stocks --clone
+        if (Test-Path $prof) {
+            Copy-Item (Join-Path $PSScriptRoot "SOUL.md") (Join-Path $prof "SOUL.md") -Force
+            Copy-Skill (Join-Path $prof "skills\finance\ru-stocks")
+            Write-Host "Профиль Hermes 'stocks' обновлён: $prof"
+        } else {
+            Copy-Skill (Join-Path $h "skills\finance\ru-stocks")
+            Write-Host "Профиль 'stocks' не найден — навык установлен в основной профиль: $h (новая сессия или /reset)"
         }
-        Copy-Item (Join-Path $PSScriptRoot "SOUL.md") (Join-Path $prof "SOUL.md") -Force
-        Copy-Skill (Join-Path $prof "skills\finance\ru-stocks")
-        Write-Host "Hermes: запустите 'stocks chat'"
     }
     "claude" {
         Copy-Skill (Join-Path $HOME ".claude\skills\ru-stocks")
