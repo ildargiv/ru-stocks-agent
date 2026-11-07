@@ -6,11 +6,20 @@
 #   ./install.sh claude          -> Claude Code: навык ~/.claude/skills/ru-stocks + субагенты stocks и stocks-devil
 #   ./install.sh codex           -> Codex CLI: навык ~/.codex/skills/ru-stocks
 #   ./install.sh all             -> всё, что установлено
+# Hermes: каталог берётся из HERMES_HOME, на Windows — %LOCALAPPDATA%/hermes, иначе ~/.hermes.
 # Данные по акциям хранятся в ~/stocks-desk (переменная STOCKS_DESK) — общие для всех сред.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SKILL_SRC="$HERE/skills/finance/ru-stocks"
 TARGET="${1:-hermes}"
+
+# Python: python3, python или py (Windows/MSYS)
+PY="$(command -v python3 || command -v python || command -v py || true)"
+# Каталог Hermes: HERMES_HOME, иначе %LOCALAPPDATA%/hermes на Windows, иначе ~/.hermes
+if [[ -n "${HERMES_HOME:-}" ]]; then HH="$HERMES_HOME"
+elif [[ -n "${LOCALAPPDATA:-}" && -d "$(cygpath -u "$LOCALAPPDATA" 2>/dev/null || echo "$LOCALAPPDATA")/hermes" ]]; then
+  HH="$(cygpath -u "$LOCALAPPDATA" 2>/dev/null || echo "$LOCALAPPDATA")/hermes"
+else HH="$HOME/.hermes"; fi
 
 copy_skill() {  # $1 = каталог назначения навыка
   mkdir -p "$(dirname "$1")"
@@ -21,7 +30,7 @@ copy_skill() {  # $1 = каталог назначения навыка
 }
 
 install_hermes() {
-  local home="$HOME/.hermes/profiles/stocks"
+  local home="$HH/profiles/stocks"
   if [[ ! -d "$home" ]]; then
     echo "Создаю профиль Hermes 'stocks' (копия текущих ключей/модели)..."
     hermes profile create stocks --clone
@@ -33,7 +42,7 @@ install_hermes() {
 }
 
 install_hermes_default() {
-  copy_skill "$HOME/.hermes/skills/finance/ru-stocks"
+  copy_skill "$HH/skills/finance/ru-stocks"
   echo "Hermes: новая сессия или /reset"
 }
 
@@ -74,6 +83,7 @@ esac
 
 mkdir -p "${STOCKS_DESK:-$HOME/stocks-desk}"
 echo "Хранилище акций: ${STOCKS_DESK:-$HOME/stocks-desk}"
-python3 -m pip install --user --quiet pypdf 2>/dev/null || echo "pypdf не установлен — для чтения PDF: pip install pypdf"
+if [[ -z "$PY" ]]; then echo "Python не найден в PATH (нужен python3, python или py)"; exit 1; fi
+"$PY" -m pip install --user --quiet pypdf 2>/dev/null || echo "pypdf не установлен — для чтения PDF: pip install pypdf"
 echo "Проверка доступа к MOEX..."
-python3 "$SKILL_SRC/scripts/moex_share.py" SBER | head -3 || echo "MOEX ISS недоступен — проверьте сеть"
+"$PY" "$SKILL_SRC/scripts/moex_share.py" SBER | head -3 || echo "MOEX ISS недоступен — проверьте сеть"

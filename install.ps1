@@ -2,8 +2,8 @@
 #   powershell -ExecutionPolicy Bypass -File install.ps1 claude
 #   powershell -ExecutionPolicy Bypass -File install.ps1 codex
 #   powershell -ExecutionPolicy Bypass -File install.ps1 openclaw
-# Для Hermes Agent используйте install.sh в WSL.
-param([ValidateSet("claude", "codex", "openclaw")][string]$Target = "claude")
+#   powershell -ExecutionPolicy Bypass -File install.ps1 hermes   # Hermes для Windows: %LOCALAPPDATA%\hermes
+param([ValidateSet("claude", "codex", "openclaw", "hermes")][string]$Target = "claude")
 $ErrorActionPreference = "Stop"
 $Src = Join-Path $PSScriptRoot "skills\finance\ru-stocks"
 
@@ -26,6 +26,18 @@ switch ($Target) {
     "codex" {
         Copy-Skill (Join-Path $HOME ".codex\skills\ru-stocks")
         Write-Host "Перезапустите сессию Codex."
+    }
+    "hermes" {
+        $hh = if ($env:HERMES_HOME) { $env:HERMES_HOME } else { Join-Path $env:LOCALAPPDATA "hermes" }
+        $profile = Join-Path $hh "profiles\stocks"
+        if (Test-Path $profile) {
+            Copy-Item (Join-Path $PSScriptRoot "SOUL.md") (Join-Path $profile "SOUL.md") -Force
+            Copy-Skill (Join-Path $profile "skills\finance\ru-stocks")
+            Write-Host "Профиль Hermes 'stocks' обновлён: $profile"
+        } else {
+            Copy-Skill (Join-Path $hh "skills\finance\ru-stocks")
+            Write-Host "Профиль 'stocks' не найден — навык установлен в основной профиль: $hh"
+        }
     }
     "openclaw" {
         Copy-Skill (Join-Path $HOME ".openclaw\skills\ru-stocks")
