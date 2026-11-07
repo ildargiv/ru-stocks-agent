@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+publish/
+.DS_Store
+# личные данные по акциям не коммитим в этот репозиторий
+stocks-desk/
