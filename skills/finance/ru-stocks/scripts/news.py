@@ -86,6 +86,29 @@ def key(item):
     return hashlib.sha1(norm.encode("utf-8")).hexdigest()[:16]
 
 
+def stems(x, secid):
+    """Основы названий для проверки релевантности: «Сбербанк России» -> сбербан, росси; тикер."""
+    words = re.findall(r"[A-Za-zА-Яа-яЁё0-9]{3,}", f"{x.get('emitent') or ''} {x.get('name') or ''}")
+    stop = {"пао", "оао", "мкпао", "акции", "группа", "компания", "холдинг", "россии", "российские"}
+    out = {w.lower()[:6] for w in words if w.lower() not in stop}
+    out.add(secid.lower())
+    return out
+
+
+def relevant(item, st):
+    t = item["title"].lower()
+    return any(s in t for s in st)
+
+
+def near_dup(title, seen_prefixes):
+    """Перепечатки/SEO-клоны: совпадение первых 35 символов заголовка без знаков."""
+    p = re.sub(r"\W+", "", title.lower())[:35]
+    if p in seen_prefixes:
+        return True
+    seen_prefixes.add(p)
+    return False
+
+
 def collect(secid, x, days):
     q = x.get("news_query") or default_query(x, secid)
     feeds = [GNEWS.format(urllib.parse.urlencode({"q": f"{q} when:{days}d", "hl": "ru", "gl": "RU", "ceid": "RU:ru"}))]
@@ -99,7 +122,7 @@ def collect(secid, x, days):
     return q, items, errors
 
 
-def store(secid, items):
+def store(secid, items, st=None, strict=True):
     p = os.path.join(ticker_dir(secid, "news"), "news.jsonl")
     seen = set()
     if os.path.exists(p):
@@ -111,10 +134,15 @@ def store(secid, items):
                     pass
     new = []
     today = dt.date.today().isoformat()
+    prefixes = set()
     with open(p, "a", encoding="utf-8") as f:
         for it in items:
             k = key(it)
             if k in seen or not it["title"]:
+                continue
+            if strict and st and it.get("feed", "").startswith("https://news.google.com") and not relevant(it, st):
+                continue  # заголовок не про эту компанию (шум Google News)
+            if near_dup(it["title"], prefixes):
                 continue
             seen.add(k)
             rec = {"id": k, "first_seen": today, **it, "important": bool(IMPORTANT.search(it["title"]))}
@@ -144,6 +172,7 @@ def main():
     ap.add_argument("--all", action="store_true", help="показать все новости за окно, а не только новые")
     ap.add_argument("--query", help="свой поисковый запрос для Google News (сохраняется для акции)")
     ap.add_argument("--add-feed", help="добавить RSS-ленту для акции")
+    ap.add_argument("--no-filter", action="store_true", help="не отсеивать заголовки без названия компании")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
 
@@ -161,7 +190,7 @@ def main():
         if a.query or a.add_feed:
             save_watchlist(wl)
         q, items, errors = collect(s, x, a.days)
-        path, new = store(s, items)
+        path, new = store(s, items, stems(x, s), strict=not a.no_filter)
         if new:
             imp = sum(1 for n in new if n["important"])
             append_journal(s, f"Новости: +{len(new)} (существенных по заголовку: {imp})", "news/news.jsonl")

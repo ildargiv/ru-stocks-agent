@@ -2,6 +2,7 @@
 import datetime as _dt
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -105,6 +106,11 @@ def today():
 def desk_root():
     """Корень хранилища. Переопределяется переменной STOCKS_DESK."""
     root = os.environ.get("STOCKS_DESK") or os.path.join(os.path.expanduser("~"), "stocks-desk")
+    root = os.path.expanduser(root)
+    # MSYS/Git-Bash отдаёт нативному python пути вида /c/Users/... — переводим в C:/Users/...
+    m = re.match(r"^/([a-zA-Z])/(.*)$", root.replace("\\", "/"))
+    if os.name == "nt" and m:
+        root = f"{m.group(1).upper()}:/{m.group(2)}"
     os.makedirs(root, exist_ok=True)
     return root
 

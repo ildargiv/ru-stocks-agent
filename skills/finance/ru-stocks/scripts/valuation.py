@@ -61,6 +61,8 @@ def main():
     ap.add_argument("--ebitda", type=float, help="EBITDA, млрд ₽")
     ap.add_argument("--revenue", type=float, help="выручка, млрд ₽")
     ap.add_argument("--net-debt", type=float, default=0, help="чистый долг, млрд ₽ (отрицательный — чистая денежная позиция)")
+    ap.add_argument("--pref-div", type=float, default=0,
+                    help="дивиденды по привилегированным акциям, млрд ₽ — вычитаются из ЧП для EPS и payout обычки")
     ap.add_argument("--equity", type=float, help="капитал акционеров, млрд ₽")
     ap.add_argument("--dps", type=float, help="дивиденд на акцию за 12 мес. или прогноз, ₽")
     ap.add_argument("--fcf", type=float, help="базовый свободный денежный поток, млрд ₽ (FCFE по умолчанию)")
@@ -96,7 +98,7 @@ def main():
     m = res["multiples"]
     if a.net_income:
         m["P/E"] = cap / a.net_income
-        m["EPS, ₽"] = a.net_income / shares
+        m["EPS, ₽"] = (a.net_income - a.pref_div) / shares
     if a.ebitda:
         m["EV/EBITDA"] = ev / a.ebitda
         m["ЧД/EBITDA"] = a.net_debt / a.ebitda
@@ -109,7 +111,7 @@ def main():
     if a.dps:
         m["Дивдоходность, %"] = a.dps / a.price * 100
         if a.net_income:
-            m["Payout, % ЧП"] = a.dps * shares / a.net_income * 100
+            m["Payout, % ЧП"] = a.dps * shares / (a.net_income - a.pref_div) * 100
     if a.fcf:
         m["FCF yield, %"] = a.fcf / (ev if a.fcff else cap) * 100
 

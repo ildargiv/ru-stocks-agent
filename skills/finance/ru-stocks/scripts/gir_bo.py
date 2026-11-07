@@ -38,7 +38,7 @@ def find_org(query):
     d = get("/advanced-search/organizations/search?" + urllib.parse.urlencode({"query": query, "page": 0}))
     orgs = d.get("content", [])
     if not orgs:
-        raise SystemExit(f"Не найдено в ГИР БО: {query}")
+        raise SystemExit(f"Не найдено в ГИР БО: {query}. Банки и НФО в ГИР БО отсутствуют — для банков берите МСФО и формы 101/102/123/135 на cbr.ru")
     clean = lambda s: (s or "").replace("<strong>", "").replace("</strong>", "")  # noqa: E731
     if len(orgs) > 1:
         print("Найдено несколько организаций, беру первую:", file=sys.stderr)
@@ -132,7 +132,7 @@ def main():
     if a.json:
         print(json.dumps(res, ensure_ascii=False, indent=1))
         return
-    print(f"=== {name} | ИНН {inn} | {res['url']} ===  (РСБУ, тыс. ₽)")
+    print(f"=== {name} | ИНН {inn} | {res['url']} ===  (РСБУ; суммы в млн ₽)")
     for m in out:
         fmt = lambda x: f"{x/1e3:,.0f} млн" if isinstance(x, (int, float)) else "—"  # noqa: E731
         print(f"\n[{m['period']}] аудит: {'да' if m['audit'] else 'нет/не найден'}")

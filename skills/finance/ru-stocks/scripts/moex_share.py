@@ -42,9 +42,28 @@ def history(secid, board, since, market="shares"):
 
 
 def dividends(secid):
-    d = get(f"/securities/{secid}/dividends.json")
-    return [{"date": r.get("registryclosedate"), "value": num(r.get("value")), "currency": r.get("currencyid")}
-            for r in table(d.get("dividends"))]
+    """Дивиденды: MOEX ISS + ручной файл market/dividends_manual.json (дополняет и приоритетнее).
+    Возвращает (список, предупреждения). Пустой ответ ISS — НЕ «дивидендов не было», а «источник недоступен»."""
+    warns, out = [], []
+    try:
+        d = get(f"/securities/{secid}/dividends.json")
+        out = [{"date": r.get("registryclosedate"), "value": num(r.get("value")),
+                "currency": r.get("currencyid"), "source": "MOEX ISS"} for r in table(d.get("dividends"))]
+    except SystemExit as e:
+        warns.append(f"MOEX ISS dividends недоступен: {e}")
+    if not out:
+        warns.append("MOEX ISS не вернул дивиденды (эндпоинт бывает пустым). Это НЕ означает, что выплат не было: "
+                     "найдите историю в e-disclosure/на сайте компании/dohod.ru и запишите в market/dividends_manual.json "
+                     'в формате [{"date": "2025-07-18", "value": 34.84, "currency": "RUB", "source": "URL"}]')
+    mp = os.path.join(ticker_dir(secid, "market", create=False), "dividends_manual.json")
+    if os.path.exists(mp):
+        with open(mp, encoding="utf-8") as f:
+            manual = json.load(f)
+        keys = {(m["date"]) for m in manual}
+        out = [x for x in out if x["date"] not in keys] + manual
+        if manual:
+            warns = [w for w in warns if "не вернул" not in w]
+    return sorted(out, key=lambda x: str(x["date"])), warns
 
 
 def ret(closes_by_date, days):
@@ -79,6 +98,7 @@ def stats(hist):
         "last_date": last_d.isoformat(), "last_close": closes[-1],
         "ret_1m": ret(series, 30), "ret_3m": ret(series, 91), "ret_6m": ret(series, 182),
         "ret_1y": ret(series, 365), "ret_3y": ret(series, 365 * 3),
+        "anomaly": any(abs((ret(series, d) or 0)) > 1000 for d in (365, 365 * 3)),
         "ytd": (closes[-1] / ytd_base - 1) * 100,
         "high_52w": max(year), "low_52w": min(year),
         "from_high_52w": (closes[-1] / max(year) - 1) * 100,
@@ -117,8 +137,9 @@ def save(secid, card, hist, divs):
         w.writeheader()
         for k in sorted(have):
             w.writerow(have[k])
-    with open(os.path.join(mdir, "dividends.json"), "w", encoding="utf-8") as f:
-        json.dump(divs, f, ensure_ascii=False, indent=1)
+    if divs:  # пустой ответ не затирает ранее сохранённую историю
+        with open(os.path.join(mdir, "dividends.json"), "w", encoding="utf-8") as f:
+            json.dump(divs, f, ensure_ascii=False, indent=1)
     snap = {"date": today(), **{k: card[k] for k in ("price", "cap", "value_today")},
             **{k: card["stats"].get(k) for k in ("ret_1m", "ret_1y", "vol_1y", "from_high_52w")},
             "div_ltm_yield": card["div"].get("ltm_yield")}
@@ -144,8 +165,10 @@ def main():
     idx = history("IMOEX", "SNDX", since, market="index")
     ist, _ = stats(idx)
     price = q["price"] or st.get("last_close")
-    divs = dividends(secid)
+    divs, dwarn = dividends(secid)
     ds = div_summary(divs, price)
+    ds["known"] = bool(divs)
+    ds["warnings"] = dwarn
     card = {**info, **q, "price": price, "stats": st, "imoex": ist, "div": ds,
             "source": f"MOEX ISS, {today()}", "url": f"https://www.moex.com/ru/issue.aspx?code={secid}"}
     if a.save:
@@ -169,7 +192,15 @@ def main():
                   f"1г {f(ist['ret_1y'])}% | 3г {f(ist['ret_3y'])}%")
         print(f"52 нед.: {f(st['low_52w'], 2)} – {f(st['high_52w'], 2)} (от максимума {f(st['from_high_52w'])}%) | "
               f"волатильность 1г {f(st['vol_1y'])}% | макс. просадка за период {f(st['max_drawdown'])}%")
-    print(f"Дивиденды LTM {f(ds['ltm'], 2)} ₽ → доходность {f(ds['ltm_yield'], 2)}% | выплаты в {ds['years_paid_last5']} из 5 последних лет")
+    if ds["known"]:
+        print(f"Дивиденды LTM {f(ds['ltm'], 2)} ₽ → доходность {f(ds['ltm_yield'], 2)}% | выплаты в {ds['years_paid_last5']} из 5 последних лет")
+    else:
+        print("Дивиденды: ДАННЫХ НЕТ (не «ноль»!)")
+    for w in ds["warnings"]:
+        print(f"  ⚠ {w}")
+    for k in ("ret_1y", "ret_3y"):
+        if st.get(k) is not None and abs(st[k]) > 1000:
+            print(f"  ⚠ {k}: {st[k]:,.0f}% — вероятно сплит/деноминация/смена бумаги; цены не скорректированы, доверять нельзя".replace(",", " "))
     if ds["by_year"]:
         print("  По годам (дата отсечки): " + " | ".join(f"{y}: {f(v, 2)}" for y, v in list(ds["by_year"].items())[-7:]))
     for x in ds["announced"]:

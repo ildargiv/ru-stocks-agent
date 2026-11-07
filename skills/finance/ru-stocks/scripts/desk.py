@@ -124,7 +124,7 @@ def count_news_since(secid, since):
 
 
 def cmd_status(a):
-    from moex_share import quote, dividends  # noqa: локальный импорт, чтобы list/add не ходили в сеть лишний раз
+    from moex_share import quote, dividends as _divs  # noqa: локальный импорт, чтобы list/add не ходили в сеть лишний раз
     wl = load_watchlist()["tickers"]
     rows = []
     for s in watched_or_all(a.tickers):
@@ -137,7 +137,7 @@ def cmd_status(a):
         since = la.get("date")
         chg = (q["price"] / la["price"] - 1) * 100 if la.get("price") and q["price"] else None
         total, new = count_news_since(s, since)
-        soon = [d for d in dividends(s) if date(d["date"]) and dt.date.today() <= date(d["date"]) <= dt.date.today() + dt.timedelta(days=60)]
+        soon = [d for d in _divs(s)[0] if date(d["date"]) and dt.date.today() <= date(d["date"]) <= dt.date.today() + dt.timedelta(days=60)]
         days = (dt.date.today() - date(since)).days if since else None
         flags = []
         if days is None:
@@ -191,9 +191,17 @@ def cmd_analysed(a):
     wl["tickers"][s]["last_analysis"] = {"date": today(), "price": q["price"], "verdict": a.verdict,
                                          "score": a.score, "target": a.target}
     save_watchlist(wl)
+    adir = ticker_dir(s, "analyses")
+    proto = a.protocol
+    if not proto:
+        files = sorted(f for f in os.listdir(adir) if f.endswith(".md"))
+        proto = files[-1] if files else None
+    if proto and not os.path.exists(os.path.join(adir, proto)):
+        print(f"⚠ протокол analyses/{proto} не найден — ссылка в журнале будет без файла", file=sys.stderr)
+        proto = None
     append_journal(s, f"Инвесткомитет: {a.verdict}" + (f", скоринг {a.score}" if a.score is not None else "")
                    + (f", справедливая стоимость {a.target} ₽" if a.target else "") + f" при цене {q['price']} ₽",
-                   f"analyses/{today()}-committee.md")
+                   f"analyses/{proto}" if proto else "протокол не сохранён")
     print(f"Записано: {s} {a.verdict} @ {q['price']} ₽")
 
 
@@ -230,7 +238,9 @@ def main():
     p = sp.add_parser("status"); p.add_argument("tickers", nargs="*"); p.set_defaults(fn=cmd_status)  # noqa: E702
     p = sp.add_parser("show"); p.add_argument("ticker"); p.set_defaults(fn=cmd_show)  # noqa: E702
     p = sp.add_parser("analysed"); p.add_argument("ticker"); p.add_argument("--verdict", required=True)  # noqa: E702
-    p.add_argument("--score", type=int); p.add_argument("--target", type=float); p.set_defaults(fn=cmd_analysed)  # noqa: E702
+    p.add_argument("--score", type=int); p.add_argument("--target", type=float)  # noqa: E702
+    p.add_argument("--protocol", help="имя файла протокола в analyses/ (по умолчанию — самый свежий)")
+    p.set_defaults(fn=cmd_analysed)
     p = sp.add_parser("log"); p.add_argument("ticker"); p.add_argument("text"); p.add_argument("--source")  # noqa: E702
     p.set_defaults(fn=cmd_log)
     p = sp.add_parser("remove"); p.add_argument("ticker"); p.add_argument("--archive", action="store_true")  # noqa: E702
