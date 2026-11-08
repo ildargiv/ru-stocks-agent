@@ -1,0 +1,24 @@
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Python scripts compile
+        run: python -m compileall -q skills
+      - name: Installer syntax
+        run: bash -n install.sh
+      - name: SKILL.md frontmatter
+        run: python .github/scripts/check_skills.py
