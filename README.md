@@ -1,10 +1,10 @@
 # Инвесткомитет — ИИ-агент для анализа российских акций (MOEX)
 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-0E7A5C) ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white) ![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-ready-555) ![OpenClaw](https://img.shields.io/badge/OpenClaw-ready-555) ![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-D97757) ![Codex CLI](https://img.shields.io/badge/Codex%20CLI-ready-555)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-0E7A5C) ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white) ![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-ready-555) ![OpenClaw](https://img.shields.io/badge/OpenClaw-ready-555) ![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-D97757) ![Codex CLI](https://img.shields.io/badge/Codex%20CLI-ready-555) [![checks](https://github.com/ildargiv/ru-stocks-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/ildargiv/ru-stocks-agent/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/ildargiv/ru-stocks-agent?label=release)](https://github.com/ildargiv/ru-stocks-agent/releases)
 
 **Открытый ИИ-агент-аналитик акций Мосбиржи** для Hermes Agent, OpenClaw, Claude Code и Codex CLI: список наблюдения, папка на каждую акцию, отчёты МСФО/РСБУ, DCF и дивиденды, решение инвесткомитета с адвокатом дьявола, база знаний в Obsidian.
 
-[Презентация агента](https://ildargiv.github.io/ru-stocks-agent/) · [English](#english) · [База знаний в Obsidian](#база-знаний-в-obsidian) · [Семейство агентов](#семейство-агентов) · [Установка](#установка)
+[Презентация агента](https://ildargiv.github.io/ru-stocks-agent/?utm_source=github&utm_medium=readme&utm_campaign=ru-stocks-agent) · [English](#english) · [База знаний в Obsidian](#база-знаний-в-obsidian) · [Семейство агентов](#семейство-агентов) · [Установка](#установка)
 
 ![Инвесткомитет: ИИ-агент для анализа акций Мосбиржи, график SBER против IMOEX и состав инвесткомитета](docs/preview.png)
 

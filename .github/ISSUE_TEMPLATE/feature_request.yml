@@ -1,0 +1,14 @@
+name: Идея
+description: Предложить улучшение или новый источник данных
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Что хотите добавить
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Зачем это нужно, как вы это делаете сейчас

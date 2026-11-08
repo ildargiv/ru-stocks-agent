@@ -1,0 +1,33 @@
+name: release
+
+# Push a tag like v1.0.0 and a GitHub Release is created with the notes from
+# the matching section of CHANGELOG.md and a ready-to-unpack bundle attached.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v tag="${GITHUB_REF_NAME}" '
+            $1=="##" && $2==tag {on=1; next}
+            $1=="##" && on {exit}
+            on {print}' CHANGELOG.md > notes.md
+          test -s notes.md || echo "See CHANGELOG.md" > notes.md
+      - name: Bundle
+        run: |
+          zip -r "ru-stocks-agent-${GITHUB_REF_NAME}.zip" skills agents SOUL.md AGENTS.md \
+            install.sh install.ps1 LICENSE DISCLAIMER.md README.md
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" "ru-stocks-agent-${GITHUB_REF_NAME}.zip" \
+            --title "ru-stocks-agent ${GITHUB_REF_NAME}" --notes-file notes.md
