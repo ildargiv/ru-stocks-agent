@@ -1,8 +1,12 @@
-# Инвесткомитет — агент-аналитик акций РФ
+# Инвесткомитет — ИИ-агент для анализа российских акций (MOEX)
 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-0E7A5C)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-0E7A5C) ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white) ![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-ready-555) ![OpenClaw](https://img.shields.io/badge/OpenClaw-ready-555) ![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-D97757) ![Codex CLI](https://img.shields.io/badge/Codex%20CLI-ready-555)
 
-Навык по стандарту Agent Skills · Hermes Agent, OpenClaw, Claude Code, Codex CLI · брат-близнец [ru-bonds-agent](https://github.com/ildargiv/ru-bonds-agent)
+**Открытый ИИ-агент-аналитик акций Мосбиржи** для Hermes Agent, OpenClaw, Claude Code и Codex CLI: список наблюдения, папка на каждую акцию, отчёты МСФО/РСБУ, DCF и дивиденды, решение инвесткомитета с адвокатом дьявола.
+
+[Презентация агента](https://ildargiv.github.io/ru-stocks-agent/) · [English](#english) · [Семейство агентов](#семейство-агентов) · [Установка](#установка)
+
+![Инвесткомитет: ИИ-агент для анализа акций Мосбиржи, график SBER против IMOEX и состав инвесткомитета](docs/preview.png)
 
 Аналитик акций Мосбиржи, который работает как ваш собственный инвестиционный отдел:
 
@@ -72,6 +76,8 @@ git clone https://github.com/ildargiv/ru-stocks-agent.git && cd ru-stocks-agent 
 - «Сравни Х5, Магнит и Ленту: кто лучше по соотношению качество/цена?»
 - «Каждый будний день в 19:00 проверяй мой список и пиши, только если что-то важное» (cron Hermes / OpenClaw, задачи по расписанию Claude)
 
+![Реальный вывод агента: карточка Сбербанка на данных MOEX ISS и оценка DCF](docs/answer.png)
+
 ## Проверка скриптов вручную
 ```bash
 S=skills/finance/ru-stocks/scripts
@@ -81,6 +87,19 @@ python3 $S/news.py SBER --days 30 --all
 python3 $S/desk.py status
 python3 $S/valuation.py --ticker SBER --net-income 1580 --equity 7300 --dps 34.84 --fcf 800 --growth 5 --rf 15 --erp 6
 ```
+
+## Семейство агентов
+Четыре открытых агента для российского рынка с одинаковой установкой и общей структурой папок:
+
+| Агент | Для чего |
+|---|---|
+| [Инвесткомитет · ru-stocks-agent](https://github.com/ildargiv/ru-stocks-agent) | анализ акций Мосбиржи: список наблюдения, папка на акцию, инвесткомитет с адвокатом дьявола |
+| [Облигационер · ru-bonds-agent](https://github.com/ildargiv/ru-bonds-agent) | облигации РФ: ОФЗ и корпоративные выпуски, YTM, дюрация, кредитный скоринг, скринер |
+| [Семейный офис · ru-portfolio-agent](https://github.com/ildargiv/ru-portfolio-agent) | портфель акций: ежедневный брифинг после закрытия биржи, недельный обзор против IMOEX |
+| [FinEx · finex-agent](https://github.com/ildargiv/finex-agent) | пайщикам фондов FinEx в ликвидации: документы, новости, модель выплаты на пай |
+
+## English
+**Investment Committee (ru-stocks-agent)** is an open-source AI agent skill for analysing Russian equities on the Moscow Exchange (MOEX). It keeps a watchlist, maintains a folder per stock (IFRS/RAS reports, news, prices, dividends, thesis, past analyses), pulls live data from MOEX ISS, the Federal Tax Service (GIR BO), e-disclosure and the Bank of Russia, and runs a multi-expert investment committee with a devil's advocate, valuation (multiples, 3-scenario DCF, reverse DCF, Gordon model) and a scored verdict. Built on the open Agent Skills standard (SKILL.md); works in Hermes Agent, OpenClaw, Claude Code, Codex CLI and claude.ai. Python 3.9+, standard library only. The agent answers in Russian. Analytics only, not investment advice.
 
 ## Лицензия
 MIT, см. [LICENSE](LICENSE).
