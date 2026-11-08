@@ -932,6 +932,8 @@ def sync(ids=None, quiet=False):
             ch += bool(hub_stock(i))
         if KIND == "bonds":
             ch += issuer_notes()
+    if not os.path.exists(shared("Home.md")):
+        build_home()  # сначала стартовая страница, чтобы индекс сразу на неё сослался
     build_index()
     build_home()
     if not quiet:
