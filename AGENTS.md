@@ -4,7 +4,7 @@
 
 Для любой задачи по акциям открой `skills/finance/ru-stocks/SKILL.md` и работай по его процедурам. Справочники — `skills/finance/ru-stocks/references/` (порядок заседания комитета — `expert-panel.md`), скрипты — `skills/finance/ru-stocks/scripts/` (Python 3.9+, стандартная библиотека; для PDF — `pip install pypdf`).
 
-Хранилище данных по акциям: `~/stocks-desk/` (или переменная `STOCKS_DESK`), по папке на тикер.
+Хранилище данных по акциям: `~/stocks-desk/` (или переменная `STOCKS_DESK`; `INVEST_VAULT` — общее хранилище всех агентов, папка `stocks/`), по папке на тикер. Это Obsidian-вики: хаб `<ТИКЕР>/<ТИКЕР>.md`, `index.md`, журнал знаний `log.md`; формат — `skills/finance/ru-stocks/references/wiki.md`.
 
 Быстрые команды из корня репозитория:
 ```bash
@@ -15,6 +15,9 @@ python skills/finance/ru-stocks/scripts/news.py                   # новост
 python skills/finance/ru-stocks/scripts/gir_bo.py <ИНН> --save SBER
 python skills/finance/ru-stocks/scripts/report_extract.py <URL PDF> --save SBER --name 2026-9m-ifrs
 python skills/finance/ru-stocks/scripts/valuation.py --ticker SBER --net-income 1580 --dps 34.84
+python skills/finance/ru-stocks/scripts/wiki.py find "дивполитика" --entity SBER   # что уже известно
+python skills/finance/ru-stocks/scripts/wiki.py log "..." --entity SBER --kind факт --source "..."
+python skills/finance/ru-stocks/scripts/wiki.py lint --save                      # проверка базы знаний
 ```
 
-Правила: только свежие данные с датой и источником; всё найденное — в папку акции; адвокат дьявола в каждом разборе; новости и форумы — гипотезы до проверки; выводы — аналитика, а не индивидуальная инвестиционная рекомендация.
+Правила: только свежие данные с датой и источником; всё найденное — в папку акции и в базу знаний (конспект, `log.md`, у каждой цифры источник); адвокат дьявола в каждом разборе; новости и форумы — гипотезы до проверки; выводы — аналитика, а не индивидуальная инвестиционная рекомендация.

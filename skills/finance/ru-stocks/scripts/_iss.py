@@ -104,8 +104,10 @@ def today():
 
 # ---------- Рабочий стол (папки акций) ----------
 def desk_root():
-    """Корень хранилища. Переопределяется переменной STOCKS_DESK."""
-    root = os.environ.get("STOCKS_DESK") or os.path.join(os.path.expanduser("~"), "stocks-desk")
+    """Корень хранилища: STOCKS_DESK, иначе INVEST_VAULT/stocks (общее Obsidian-хранилище агентов), иначе ~/stocks-desk."""
+    vault = os.environ.get("INVEST_VAULT")
+    root = os.environ.get("STOCKS_DESK") or (os.path.join(vault, "stocks") if vault else
+                                              os.path.join(os.path.expanduser("~"), "stocks-desk"))
     root = os.path.expanduser(root)
     # MSYS/Git-Bash отдаёт нативному python пути вида /c/Users/... — переводим в C:/Users/...
     m = re.match(r"^/([a-zA-Z])/(.*)$", root.replace("\\", "/"))

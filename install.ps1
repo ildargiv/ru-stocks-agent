@@ -48,3 +48,4 @@ $desk = if ($env:STOCKS_DESK) { $env:STOCKS_DESK } else { Join-Path $HOME "stock
 New-Item -ItemType Directory -Force $desk | Out-Null
 Write-Host "Хранилище акций: $desk"
 try { python -m pip install --user --quiet pypdf } catch { Write-Host "Для чтения PDF: pip install pypdf" }
+try { python (Join-Path $Src "scripts\wiki.py") init | Out-Null; Write-Host "База знаний Obsidian: откройте $desk в Obsidian как хранилище" } catch { Write-Host "База знаний: python wiki.py init" }

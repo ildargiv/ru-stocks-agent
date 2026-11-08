@@ -19,10 +19,19 @@ import sys
 
 from _iss import (resolve, load_watchlist, save_watchlist, ticker_dir, desk_root, append_journal,
                   watched_or_all, today, date)
+import wiki  # база знаний Obsidian: хаб-заметки, index, log (references/wiki.md)
 
 SUBDIRS = ("market", "financials", "reports", "news", "forums", "analyses")
 
-PROFILE = """# {secid} — {emitent}
+PROFILE = """---
+type: profile
+entity: {secid}
+up: "[[{secid}/{secid}|{secid}]]"
+tags: [desk/stocks, type/profile]
+created: {date}
+updated: {date}
+---
+# {secid} — {emitent}
 
 > Профиль компании. Создан {date}; агент дополняет его при первом глубоком разборе и обновляет при существенных изменениях.
 
@@ -51,7 +60,17 @@ _3–6 показателей, которые реально двигают ст
 _Даты отчётов, ГОСА, СД по дивидендам, Investor Day._
 """
 
-THESIS = """# Инвестиционный тезис: {secid}
+THESIS = """---
+type: thesis
+entity: {secid}
+up: "[[{secid}/{secid}|{secid}]]"
+verdict:
+target:
+tags: [desk/stocks, type/thesis]
+created: {date}
+updated: {date}
+---
+# Инвестиционный тезис: {secid}
 
 > Живой документ. Обновляется после каждого заседания инвесткомитета. Старые версии — в analyses/.
 
@@ -84,11 +103,15 @@ def cmd_add(a):
                     f.write(tpl.format(**fields))
         if not os.path.exists(os.path.join(root, "journal.md")):
             with open(os.path.join(root, "journal.md"), "w", encoding="utf-8") as f:
-                f.write(f"# Хронология: {secid}\n\n")
+                f.write(f"---\ntype: journal\nentity: {secid}\nup: \"[[{secid}/{secid}|{secid}]]\"\n"
+                        f"tags: [desk/stocks, type/journal]\n---\n# Хронология: {secid}\n\n")
         append_journal(secid, "Начато наблюдение" + (f": {a.note}" if a.note else ""))
         wl["tickers"][secid] = {**{k: info[k] for k in ("isin", "name", "emitent", "inn", "board")},
                                 "added": today(), "note": a.note, "last_analysis": None}
         save_watchlist(wl)
+        wiki.safe_log(f"Начато наблюдение: {info['emitent']}" + (f" ({a.note})" if a.note else ""), secid, "источник",
+                      "MOEX ISS")
+        wiki.safe_sync([secid])
         print(f"✅ {secid} ({info['emitent']}, ИНН {info['inn']}) — под наблюдением. Папка: {root}")
         print("   Дальше: первичный глубокий разбор (SKILL.md, процедуры 0 и A).")
 
@@ -202,11 +225,16 @@ def cmd_analysed(a):
     append_journal(s, f"Инвесткомитет: {a.verdict}" + (f", скоринг {a.score}" if a.score is not None else "")
                    + (f", справедливая стоимость {a.target} ₽" if a.target else "") + f" при цене {q['price']} ₽",
                    f"analyses/{proto}" if proto else "протокол не сохранён")
+    wiki.safe_log(f"Инвесткомитет: {a.verdict}" + (f", скоринг {a.score}" if a.score is not None else "")
+                  + (f", справедливая стоимость {a.target} ₽" if a.target else ""), s, "вывод",
+                  f"analyses/{proto}" if proto else "")
+    wiki.safe_sync([s])
     print(f"Записано: {s} {a.verdict} @ {q['price']} ₽")
 
 
 def cmd_log(a):
     append_journal(a.ticker.upper(), a.text, a.source or "")
+    wiki.safe_sync([a.ticker.upper()])
     print("Записано в journal.md")
 
 
@@ -223,6 +251,7 @@ def cmd_remove(a):
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         os.replace(root, dst)
         root = dst
+    wiki.safe_sync()
     print(f"{s} снят с наблюдения; данные сохранены в {root}")
 
 

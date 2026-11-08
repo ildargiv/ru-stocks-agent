@@ -2,9 +2,9 @@
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![Agent Skills](https://img.shields.io/badge/Agent%20Skills-SKILL.md-0E7A5C) ![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white) ![Hermes Agent](https://img.shields.io/badge/Hermes%20Agent-ready-555) ![OpenClaw](https://img.shields.io/badge/OpenClaw-ready-555) ![Claude Code](https://img.shields.io/badge/Claude%20Code-ready-D97757) ![Codex CLI](https://img.shields.io/badge/Codex%20CLI-ready-555)
 
-**Открытый ИИ-агент-аналитик акций Мосбиржи** для Hermes Agent, OpenClaw, Claude Code и Codex CLI: список наблюдения, папка на каждую акцию, отчёты МСФО/РСБУ, DCF и дивиденды, решение инвесткомитета с адвокатом дьявола.
+**Открытый ИИ-агент-аналитик акций Мосбиржи** для Hermes Agent, OpenClaw, Claude Code и Codex CLI: список наблюдения, папка на каждую акцию, отчёты МСФО/РСБУ, DCF и дивиденды, решение инвесткомитета с адвокатом дьявола, база знаний в Obsidian.
 
-[Презентация агента](https://ildargiv.github.io/ru-stocks-agent/) · [English](#english) · [Семейство агентов](#семейство-агентов) · [Установка](#установка)
+[Презентация агента](https://ildargiv.github.io/ru-stocks-agent/) · [English](#english) · [База знаний в Obsidian](#база-знаний-в-obsidian) · [Семейство агентов](#семейство-агентов) · [Установка](#установка)
 
 ![Инвесткомитет: ИИ-агент для анализа акций Мосбиржи, график SBER против IMOEX и состав инвесткомитета](docs/preview.png)
 
@@ -13,6 +13,7 @@
 - **Список наблюдения.** Говорите «следи за Сбером» — агент ставит акцию на наблюдение и сразу делает первичный глубокий разбор. Акций может быть сколько угодно.
 - **Папка на каждую акцию.** Отчёты МСФО/РСБУ (PDF и текст), новости, история цен и дивидендов, проверенные слухи, тезис и протоколы всех разборов копятся в `~/stocks-desk/<ТИКЕР>/`. Каждый следующий разбор опирается на предыдущий: что изменилось и подтвердились ли ожидания.
 - **Инвесткомитет вместо одного мнения.** Отраслевой аналитик, долгосрочный инвестор, **адвокат дьявола**, риск-менеджер, дивидендный аналитик и эксперт по корпоративному управлению, макроэкономист пишут мнения независимо; адвокат дьявола атакует; эксперты отвечают; голосование; решение председателя со скорингом, диапазоном стоимости и триггерами пересмотра.
+- **База знаний в Obsidian.** Хранилище — LLM-вики: хаб-заметка на каждую акцию, конспекты отчётов, журнал того, что агент узнал, проверка на противоречия и цифры без источника, недельный дайджест. Открывается в Obsidian, общий формат со всеми агентами семейства.
 - **Живые данные.** MOEX ISS, ГИР БО ФНС, отчётность компании, e-disclosure, cbr.ru, новости; собственный пересчёт FCF, долга, payout; мультипликаторы, DCF в трёх сценариях, обратный DCF, дивидендная модель.
 
 ## Состав
@@ -28,6 +29,7 @@ skills/finance/ru-stocks/
     expert-panel.md                  инвесткомитет: роли, вопросы, порядок заседания, голосование
     analysis-framework.md            методология: бизнес, финансы, оценка, дивиденды, корпоративное управление РФ, скоринг
     desk-structure.md                что лежит в папке акции и как её вести
+    wiki.md                          база знаний: формат Obsidian-вики, общий для всех агентов семейства
     data-sources.md                  где брать данные
     reading-reports.md               как читать МСФО/РСБУ глазами акционера
     news-forums.md                   новости и форумы: сбор и проверка
@@ -39,20 +41,35 @@ skills/finance/ru-stocks/
     gir_bo.py                        РСБУ из ГИР БО ФНС
     report_extract.py                чтение и архивирование PDF-отчётов
     valuation.py                     мультипликаторы, DCF, обратный DCF, модель Гордона
+    wiki.py                          база знаний Obsidian: хабы, index, log, поиск, проверка, дайджест
 ```
 
 ## Папка акции
 ```
-~/stocks-desk/
+~/stocks-desk/                       открывается в Obsidian как хранилище
+  index.md  log.md  topics/  digests/  _templates/
   watchlist.json
   SBER/
+    SBER.md          хаб: свойства и ссылки
     README.md        профиль компании          thesis.md     текущий тезис и триггеры
     journal.md       хронология событий        analyses/     протоколы комитета по датам
     market/          цены, дивиденды, снимки   financials/   МСФО-таблица, РСБУ
     reports/         PDF и текст отчётов       news/         новости и проверенные события
     forums/          срезы форумов с проверкой
 ```
-Одна папка — для всех сред: начните в Claude Code, продолжите в Hermes. Корень меняется переменной `STOCKS_DESK`.
+Одна папка — для всех сред: начните в Claude Code, продолжите в Hermes. Корень меняется переменной `STOCKS_DESK` (или `INVEST_VAULT` — общее хранилище всех агентов, папка `stocks/`).
+
+## База знаний в Obsidian
+Хранилище агента — это готовая **LLM-вики в формате Obsidian**: markdown-заметки со ссылками `[[...]]` и свойствами (YAML-frontmatter), которые агент пишет и читает сам. Откройте папку `~/stocks-desk` в Obsidian («Открыть папку как хранилище») и увидите граф связей, обратные ссылки и свойства.
+
+- **Хаб на каждую акцию** — `SBER/SBER.md`: вердикт, оценка, дата разбора и ссылки на тезис, разборы, конспекты отчётов, новости.
+- **Сырые документы — вложения**, рядом заметка-конспект с цифрами и номерами страниц.
+- **`log.md` — журнал знаний**: что агент узнал, вывел или исправил, с источником. **`index.md`** собирается автоматически.
+- **Проверка вики** (`wiki.py lint`): битые ссылки, цифры без источника, устаревшие тезисы, незаконспектированные отчёты, противоречия между заметками.
+- **Недельный дайджест** (`wiki.py digest`), **шаблоны** заметок, **сквозные темы** (`topics/`: ставка ЦБ, отрасли).
+- **Все агенты в одном Obsidian:** задайте всем `INVEST_VAULT=~/invest-vault` — у каждого будет своя подпапка, а темы, шаблоны и стартовая страница станут общими. Формат одинаковый во всех агентах семейства: [`references/wiki.md`](skills/finance/ru-stocks/references/wiki.md).
+- Личные данные (ваша позиция, средняя цена, количества) в вики не попадают и лежат в файлах из `.gitignore` хранилища.
+
 
 ## Установка
 ```bash
@@ -73,6 +90,8 @@ git clone https://github.com/ildargiv/ru-stocks-agent.git && cd ru-stocks-agent 
 - «Разбери Лукойл комитетом: стоит ли докупать после отсечки?»
 - «Вышел отчёт МТС за 9 месяцев — что изменилось для акционеров?»
 - «Что нового по моим акциям?»
+- «Что мы уже знаем про дивполитику Сбера? Найди в базе знаний»
+- «Проверь базу знаний и пришли недельный дайджест»
 - «Сравни Х5, Магнит и Ленту: кто лучше по соотношению качество/цена?»
 - «Каждый будний день в 19:00 проверяй мой список и пиши, только если что-то важное» (cron Hermes / OpenClaw, задачи по расписанию Claude)
 
@@ -85,6 +104,8 @@ python3 $S/desk.py add SBER --note "дивиденды"
 python3 $S/moex_share.py SBER --save
 python3 $S/news.py SBER --days 30 --all
 python3 $S/desk.py status
+python3 $S/wiki.py init      # база знаний Obsidian: хабы, index, log, шаблоны
+python3 $S/wiki.py lint      # проверка вики
 python3 $S/valuation.py --ticker SBER --net-income 1580 --equity 7300 --dps 34.84 --fcf 800 --growth 5 --rf 15 --erp 6
 ```
 
@@ -98,8 +119,10 @@ python3 $S/valuation.py --ticker SBER --net-income 1580 --equity 7300 --dps 34.8
 | [Семейный офис · ru-portfolio-agent](https://github.com/ildargiv/ru-portfolio-agent) | портфель акций: ежедневный брифинг после закрытия биржи, недельный обзор против IMOEX | `git clone https://github.com/ildargiv/ru-portfolio-agent.git && cd ru-portfolio-agent && ./install.sh claude` |
 | [FinEx · finex-agent](https://github.com/ildargiv/finex-agent) | пайщикам фондов FinEx в ликвидации: документы, новости, модель выплаты на пай | `git clone https://github.com/ildargiv/finex-agent.git && cd finex-agent && ./install.sh claude` |
 
+Все агенты пишут базу знаний в одном формате Obsidian-вики: задайте им общую папку `INVEST_VAULT=~/invest-vault`, и акции, портфель, облигации и FinEx окажутся в одном хранилище Obsidian со связями между заметками.
+
 ## English
-**Investment Committee (ru-stocks-agent)** is an open-source AI agent skill for analysing Russian equities on the Moscow Exchange (MOEX). It keeps a watchlist, maintains a folder per stock (IFRS/RAS reports, news, prices, dividends, thesis, past analyses), pulls live data from MOEX ISS, the Federal Tax Service (GIR BO), e-disclosure and the Bank of Russia, and runs a multi-expert investment committee with a devil's advocate, valuation (multiples, 3-scenario DCF, reverse DCF, Gordon model) and a scored verdict. Built on the open Agent Skills standard (SKILL.md); works in Hermes Agent, OpenClaw, Claude Code, Codex CLI and claude.ai. Python 3.9+, standard library only. The agent answers in Russian. Analytics only, not investment advice.
+**Investment Committee (ru-stocks-agent)** is an open-source AI agent skill for analysing Russian equities on the Moscow Exchange (MOEX). It keeps a watchlist, maintains a folder per stock (IFRS/RAS reports, news, prices, dividends, thesis, past analyses), pulls live data from MOEX ISS, the Federal Tax Service (GIR BO), e-disclosure and the Bank of Russia, and runs a multi-expert investment committee with a devil's advocate, valuation (multiples, 3-scenario DCF, reverse DCF, Gordon model) and a scored verdict. Its storage is an **Obsidian-compatible LLM wiki**: markdown notes with [[wikilinks]] and YAML frontmatter that the agent reads and writes itself (hub note per stock, source notes for raw documents, a knowledge log, generated index, wiki lint for broken links, uncited numbers, stale notes and contradictions, weekly digest). All agents of the family share one format and can live in one Obsidian vault (`INVEST_VAULT`). Built on the open Agent Skills standard (SKILL.md); works in Hermes Agent, OpenClaw, Claude Code, Codex CLI and claude.ai. Python 3.9+, standard library only. The agent answers in Russian. Analytics only, not investment advice.
 
 ## Лицензия
 MIT, см. [LICENSE](LICENSE).
