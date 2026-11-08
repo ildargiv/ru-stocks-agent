@@ -89,14 +89,14 @@ python3 $S/valuation.py --ticker SBER --net-income 1580 --equity 7300 --dps 34.8
 ```
 
 ## Семейство агентов
-Четыре открытых агента для российского рынка с одинаковой установкой и общей структурой папок:
+Каждый агент живёт в своём репозитории и ставится отдельно. Если нужен ещё один, установите его рядом, одной командой (для Claude Code: `./install.sh claude`, для Hermes: `./install.sh`):
 
-| Агент | Для чего |
-|---|---|
-| [Инвесткомитет · ru-stocks-agent](https://github.com/ildargiv/ru-stocks-agent) | анализ акций Мосбиржи: список наблюдения, папка на акцию, инвесткомитет с адвокатом дьявола |
-| [Облигационер · ru-bonds-agent](https://github.com/ildargiv/ru-bonds-agent) | облигации РФ: ОФЗ и корпоративные выпуски, YTM, дюрация, кредитный скоринг, скринер |
-| [Семейный офис · ru-portfolio-agent](https://github.com/ildargiv/ru-portfolio-agent) | портфель акций: ежедневный брифинг после закрытия биржи, недельный обзор против IMOEX |
-| [FinEx · finex-agent](https://github.com/ildargiv/finex-agent) | пайщикам фондов FinEx в ликвидации: документы, новости, модель выплаты на пай |
+| Агент | Для чего | Установка |
+|---|---|---|
+| [Инвесткомитет · ru-stocks-agent](https://github.com/ildargiv/ru-stocks-agent) | анализ акций Мосбиржи: список наблюдения, папка на акцию, инвесткомитет с адвокатом дьявола | `git clone https://github.com/ildargiv/ru-stocks-agent.git && cd ru-stocks-agent && ./install.sh claude` |
+| [Облигационер · ru-bonds-agent](https://github.com/ildargiv/ru-bonds-agent) | облигации РФ: ОФЗ и корпоративные выпуски, YTM, дюрация, кредитный скоринг, скринер | `git clone https://github.com/ildargiv/ru-bonds-agent.git && cd ru-bonds-agent && ./install.sh claude` |
+| [Семейный офис · ru-portfolio-agent](https://github.com/ildargiv/ru-portfolio-agent) | портфель акций: ежедневный брифинг после закрытия биржи, недельный обзор против IMOEX | `git clone https://github.com/ildargiv/ru-portfolio-agent.git && cd ru-portfolio-agent && ./install.sh claude` |
+| [FinEx · finex-agent](https://github.com/ildargiv/finex-agent) | пайщикам фондов FinEx в ликвидации: документы, новости, модель выплаты на пай | `git clone https://github.com/ildargiv/finex-agent.git && cd finex-agent && ./install.sh claude` |
 
 ## English
 **Investment Committee (ru-stocks-agent)** is an open-source AI agent skill for analysing Russian equities on the Moscow Exchange (MOEX). It keeps a watchlist, maintains a folder per stock (IFRS/RAS reports, news, prices, dividends, thesis, past analyses), pulls live data from MOEX ISS, the Federal Tax Service (GIR BO), e-disclosure and the Bank of Russia, and runs a multi-expert investment committee with a devil's advocate, valuation (multiples, 3-scenario DCF, reverse DCF, Gordon model) and a scored verdict. Built on the open Agent Skills standard (SKILL.md); works in Hermes Agent, OpenClaw, Claude Code, Codex CLI and claude.ai. Python 3.9+, standard library only. The agent answers in Russian. Analytics only, not investment advice.
