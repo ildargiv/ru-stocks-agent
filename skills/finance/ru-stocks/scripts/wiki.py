@@ -346,6 +346,8 @@ def infer_type(relpath):
     """Тип заметки по пути внутри хранилища агента (для файлов без frontmatter)."""
     p = relpath.split("/")
     name = p[-1]
+    if p[0] == "_private":
+        return "private", True
     if p[0] == "_portfolio":
         return {"briefs": "brief", "reviews": "review"}.get(p[1] if len(p) > 2 else "", "journal"), True
     if KIND == "finex":
@@ -855,6 +857,7 @@ OBSIDIAN = {
 GITIGNORE = """# Личные данные — не публиковать, даже если хранилище в git/облаке
 portfolio.json
 _portfolio/
+_private/
 inbox/
 reports/payout-*
 *.ods
