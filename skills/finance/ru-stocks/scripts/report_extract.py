@@ -96,6 +96,9 @@ def main():
             f.write(f"- {_dt.date.today().isoformat()} | {base} | {len(pages)} стр. | {a.src}\n")
         append_journal(a.save, f"Отчёт добавлен в архив: {base}", a.src)
         print(f"Архив: {os.path.join(rdir, base)}.pdf/.txt")
+        import wiki
+        wiki.safe_sync([a.save.upper()])
+        print(f"Заметка для конспекта: {os.path.join(rdir, base)}.md (заполни раздел «Конспект»)")
     print(f"Страниц: {len(pages)}; символов: {sum(len(t) for _, t in pages)}")
     if sum(len(t) for _, t in pages) < 30 * len(pages):
         print("Похоже на скан без текстового слоя — нужен OCR (ocrmypdf) или читайте как изображения.")
