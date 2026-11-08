@@ -165,11 +165,15 @@ def _scalar(v):
 
 
 def _split_list(s):
-    out, cur, q = [], "", None
+    out, cur, q, esc = [], "", None, False
     for ch in s:
         if q:
             cur += ch
-            if ch == q:
+            if esc:
+                esc = False
+            elif ch == "\\" and q == '"':
+                esc = True
+            elif ch == q:
                 q = None
         elif ch in "\"'":
             q = ch
@@ -410,7 +414,7 @@ def hub_stock(eid):
     la = x.get("last_analysis") or {}
     p = os.path.join(root, f"{eid}.md")
     fm0, body = parse_fm(read(p))
-    name = x.get("emitent") or x.get("name") or fm0.get("name") or eid
+    name = (x.get("name") if KIND == "bonds" else x.get("emitent") or x.get("name")) or fm0.get("name") or eid
     fm = dict(fm0)
     fm.update({
         "type": ENTITY_TYPE, "id": eid, "ticker": eid,
@@ -434,8 +438,10 @@ def hub_stock(eid):
     if la:
         L.append(f"> **Вывод последнего разбора** ({la.get('date')}): **{la.get('verdict') or '—'}**"
                  + (f" · скоринг {la['score']}" if la.get("score") is not None else "")
-                 + (f" · справедливая стоимость {la['target']}" if la.get("target") else "")
-                 + (f" · цена на дату разбора {la['price']}" if la.get("price") else ""))
+                 + ((f" · справедливая YTM {la['target']}%" if KIND == "bonds" else f" · справедливая стоимость {la['target']}")
+                    if la.get("target") else "")
+                 + (f" · цена на дату разбора {la['price']}" + ("%" if KIND == "bonds" else "") if la.get("price") else "")
+                 + (f" · YTM {la['ytm']}%" if la.get("ytm") else ""))
     else:
         L.append("> Разбора ещё не было.")
     docs = [("README", "Профиль"), ("thesis", "Тезис"), ("journal", "Хронология"),
@@ -797,7 +803,7 @@ def log_entry(text, entity=None, kind="факт", source=""):
                          f"# Журнал знаний: {KIND_LABEL}\n\nЧто агент узнал, вывел или исправил — одна строка на факт, "
                          "с источником. Только добавление.\n\n"))
     if entity:
-        eid = entity.upper() if KIND != "bonds" else entity
+        eid = entity.upper()
         ent = link(f"funds/{eid}", eid) if KIND == "finex" else link(f"{eid}/{eid}", eid)
     else:
         ent = "общее"
@@ -889,7 +895,7 @@ def ensure_vault(verbose=False):
     if missing or not cur:
         write(gi, (cur.rstrip() + "\n\n" if cur.strip() else "") + GITIGNORE)
         made.append(".gitignore")
-    seeds = ["Ключевая ставка ЦБ"] + (["Ликвидация FinEx"] if KIND == "finex" else [])
+    seeds = ["Ликвидация FinEx"] if KIND == "finex" else ["Ключевая ставка ЦБ"]
     for t in seeds:
         p = shared("topics", t + ".md")
         if not os.path.exists(p):
@@ -965,7 +971,7 @@ def cmd_note(a):
     ensure_vault()
     typ = a.type
     ent = (a.entity or [None])[0]
-    if ent and KIND != "bonds":
+    if ent:
         ent = ent.upper()
     title = a.title
     date = a.date or today()
@@ -979,7 +985,7 @@ def cmd_note(a):
         fm["source"] = a.source
     if a.entity:
         if typ == "topic":
-            fm["entities"] = [e.upper() if KIND != "bonds" else e for e in a.entity]
+            fm["entities"] = [e.upper() for e in a.entity]
         else:
             fm["entity"] = ent
             fm["up"] = link(f"funds/{ent}", ent) if KIND == "finex" else link(f"{ent}/{ent}", ent)
@@ -1003,7 +1009,7 @@ def cmd_note(a):
     write(p, with_fm(fm, body))
     print(f"Создано: {p}")
     if a.entity and KIND != "finex":
-        safe_sync([e.upper() if KIND != "bonds" else e for e in a.entity])
+        safe_sync([e.upper() for e in a.entity])
 
 
 # ---------- Поиск ----------
@@ -1035,7 +1041,7 @@ def cmd_find(a):
         if a.type and fm.get("type") != a.type:
             continue
         if a.entity:
-            e = a.entity.upper() if KIND != "bonds" else a.entity
+            e = a.entity.upper()
             ents = [str(x) for x in (fm.get("entities") or [])]
             if note_entity(p, fm) != e and e not in ents:
                 continue
@@ -1175,7 +1181,7 @@ def cmd_lint(a):
     if KIND == "finex":
         for r_ in read_jsonl(os.path.join(desk(), "docs", "index.jsonl")):
             if (r_.get("status") or "") != "прочитан":
-                todo.append(f"docs/{doc_base(r_)}: документ не прочитан (docs.py --read ... --summary)")
+                todo.append(f"{rel(os.path.join(desk(), 'docs', doc_base(r_)), v)}.md: документ не прочитан (docs.py --read ... --summary)")
         ids, ref, navs, _ = finex_funds()
         for n_ in navs:
             want = (ref.get(n_.get("ticker")) or {}).get("ccy")
@@ -1335,11 +1341,11 @@ def main():
         sync()
         print(f"Откройте в Obsidian папку {vault()} («Открыть папку как хранилище»). Правила — references/wiki.md.")
     elif a.cmd == "sync":
-        sync([i.upper() if KIND != "bonds" else i for i in a.ids] or None)
+        sync([i.upper() for i in a.ids] or None)
     elif a.cmd == "log":
         print(log_entry(a.text, a.entity, a.kind, a.source))
         if a.entity:
-            safe_sync([a.entity.upper() if KIND != "bonds" else a.entity])
+            safe_sync([a.entity.upper()])
     elif a.cmd == "note":
         cmd_note(a)
     elif a.cmd == "find":
